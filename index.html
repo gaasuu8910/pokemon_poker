@@ -417,6 +417,29 @@ body.lobbying .lobby{display:flex}
 .zmove p{font-weight:700;font-size:14px;line-height:1.6;margin-top:2px}
 .ghead .hbtns .btn-text{padding:4px 9px}
 .seat .nm em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:6em}
+/* bets & yaku ladder */
+.betline{display:flex;gap:4px;align-items:center;justify-content:center;min-height:20px;flex-wrap:wrap}
+.betline .bt{font-size:11px;font-weight:900;background:#EEF2FF;border:2px solid var(--ink);border-radius:999px;padding:0 7px}
+.betline .bt:empty{display:none}
+.betline .ac{font-size:11px;font-weight:900;border:2px solid var(--ink);border-radius:999px;padding:0 7px}
+.betline .ac:empty{display:none}
+.ac.up{background:var(--magenta);color:#fff}
+.ac.call{background:var(--blue);color:#fff}
+.ac.chk{background:#fff;color:var(--ink)}
+.ac.fold{background:#C9CCDD;color:#555A80}
+.betline.mine{justify-content:flex-start}
+.potline .high{display:inline-block;margin-left:10px;font-size:13px;color:var(--yellow)}
+.now{min-height:3.6em;font-size:clamp(14px,2.2vw,16px)}
+.yrow,.yrow2{grid-template-columns:7.2em 1fr auto !important;gap:8px !important}
+.yrow .pc,.yrow2 .pc{--w:30px}
+.yrow .cards,.yrow2 .cards{justify-content:flex-start;gap:3px}
+.stars{display:block;font-style:normal;font-size:11px;letter-spacing:-1px;color:var(--magenta);font-weight:900;line-height:1.2}
+.freq{font-size:11px;font-weight:900;color:#3B4170;white-space:nowrap}
+.yrow.big3,.yrow2.big3{background:#FFF8D6}
+.yaku{gap:5px}
+.yrow{padding:5px 10px}
+.yrow .nm small,.yrow2 .nm small{font-size:10.5px}
+@media (max-width:640px){ header .logo{font-size:15px} header .logo .dots{display:none} header .count{font-size:12px} .btn-play{padding:6px 11px;font-size:13px} }
 /* fixes */
 .pc,.pc *{-webkit-text-stroke:0}
 .opps{gap:6px;justify-content:space-between}
@@ -469,14 +492,8 @@ body.lobbying .lobby{display:flex}
       </div>
     </section>
 
-    <section class="scene" id="s-yaku" data-cap="5枚のうち3枚で役を作る。上ほど強い。">
-      <div class="yaku">
-        <div class="yrow rise" style="--d:0"><span class="rk">1</span><div class="cards"><i class="cd" data-c="0-0-1" data-sz="sm"></i><i class="cd" data-c="0-0-2" data-sz="sm"></i><i class="cd" data-c="0-0-3" data-sz="sm"></i></div><span class="nm">進化ライン<small>同じラインのたね・1進化・2進化</small></span></div>
-        <div class="yrow rise" style="--d:1"><span class="rk">2</span><div class="cards"><i class="cd" data-c="0-0-3" data-sz="sm"></i><i class="cd" data-c="1-0-3" data-sz="sm"></i><i class="cd" data-c="2-0-3" data-sz="sm"></i></div><span class="nm">同じ数字3枚<small>御三家の最終進化そろい</small></span></div>
-        <div class="yrow rise" style="--d:2"><span class="rk">3</span><div class="cards"><i class="cd" data-c="0-1-1" data-sz="sm"></i><i class="cd" data-c="0-2-2" data-sz="sm"></i><i class="cd" data-c="0-0-3" data-sz="sm"></i></div><span class="nm">同じタイプ3枚<small>タイプが3匹そろう</small></span></div>
-        <div class="yrow rise" style="--d:3"><span class="rk">4</span><div class="cards"><i class="cd" data-c="0-0-3" data-sz="sm"></i><i class="cd" data-c="1-0-3" data-sz="sm"></i></div><span class="nm">同じ数字2枚</span></div>
-        <div class="yrow rise" style="--d:4"><span class="rk">5</span><div class="cards"><span class="pill ghost">そろわない</span></div><span class="nm">なし</span></div>
-      </div>
+    <section class="scene" id="s-yaku" data-cap="5枚のうち3枚で役を作る。★が多いほど強い。同じタイプの3匹が、進化の順に並べば「階段」、同じ系統なら「進化ライン」とレベルアップしていく。">
+      <div class="yaku" id="tYaku"></div>
     </section>
 
     <section class="scene" id="s-rule" data-cap="役には手札を1枚以上使う。同じ役どうしなら、タイプ相性で強い方が勝ち。相性で決まらなければ、大きい数字で比べる。">
@@ -580,12 +597,12 @@ body.lobbying .lobby{display:flex}
   <div class="opps" id="opps"></div>
   <div class="tablemid">
     <div class="row"><div class="deckbox"><div class="cards" id="gBoard"></div><span>場札</span></div><div class="deckbox"><div id="gDeck"></div><span>山札</span></div></div>
-    <div class="potline">場のチップ <b id="gPot">0</b> 枚</div>
+    <div class="potline">場のチップ <b id="gPot">0</b> 枚<span class="high" id="gHigh"></span></div>
   </div>
   <div class="me" id="meArea">
     <span class="bubble"></span>
     <div class="cards" id="meHand"></div>
-    <div class="meinfo"><span class="mename">あなた</span><span>チップ <b id="meChips">20</b> 枚</span><span class="mehand" id="meHandName"></span></div>
+    <div class="meinfo"><span class="mename">あなた</span><span>手持ち <b id="meChips">20</b> 枚</span><span class="betline mine"><span class="bt" id="meBet"></span><span class="ac" id="meAct"></span></span><span class="mehand" id="meHandName"></span></div>
   </div>
   <div class="now" id="gNow" aria-live="polite"></div>
   <div class="controls" id="gCtl"></div>
@@ -646,7 +663,8 @@ const ICON = [
   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 3C9 3 4 9 4 15c0 2 .6 4 1.5 5.5C7 15 10 11 15 9c-4 3-7 7-8 12 9 0 13-7 13-18z"/></svg>',
   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2 5 14h6l-2 8 10-13h-6l1-7z"/></svg>'];
 const ICON_M = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/><text x="12" y="16.5" text-anchor="middle" font-size="12" font-weight="900" fill="#fff">?</text></svg>';
-const RANK = ['なし','同じ数字2枚','同じタイプ3枚','同じ数字3枚','進化ライン'];
+const RANK = ['なし','同じ数字2枚','進化ペア','同じタイプ3枚','進化の階段','御三家そろい','進化ライン'];
+const TYPED = [6, 4, 3, 2];
 function mkCard(t, l, s){ return {t, l, s, lv:l + 1 + 3*(s - 1), name:NAMES[t][l][s - 1], move:(l === 0 && s === 1) || (l === 1 && s === 2)}; }
 const ALL = [];
 for (let t = 0; t < 4; t++) for (let l = 0; l < 3; l++) for (let s = 1; s <= 3; s++) ALL.push(mkCard(t, l, s));
@@ -669,15 +687,28 @@ const BEATS = {0:2, 2:3, 3:1, 1:0};   // ほのお>くさ>でんき>みず>ほ�
 function cat3(c){
   const same = f => c[0][f] === c[1][f] && c[1][f] === c[2][f];
   const lvs = c.map(x => x.lv).sort((a, b) => b - a);
+  const real = c.every(x => x.t < 9);
+  const stair = new Set(c.map(x => x.s)).size === 3;
   let k = 0, type = null, key = lvs;
-  if (same('t') && same('l') && new Set(c.map(x => x.s)).size === 3 && c[0].t < 9){ k = 4; type = c[0].t; }
-  else if (same('lv') && lvs[0] > 0) k = 3;
-  else if (same('t') && c[0].t < 9){ k = 2; type = c[0].t; }
+  if (real && same('t') && same('l') && stair){ k = 6; type = c[0].t; }
+  else if (real && same('lv') && new Set(c.map(x => x.t)).size === 3) k = 5;
+  else if (real && same('t') && stair){ k = 4; type = c[0].t; }
+  else if (real && same('t')){ k = 3; type = c[0].t; }
   else {
-    for (let a = 0; a < 3; a++) for (let b = a + 1; b < 3; b++) if (c[a].lv === c[b].lv && c[a].lv > 0 && k === 0){
-      k = 1; const rest = c.filter((x, i) => i !== a && i !== b).map(x => x.lv);
-      key = [c[a].lv, c[a].lv, ...rest];
+    let pk = null, pt = null, nk = null;
+    for (let a = 0; a < 3; a++) for (let b = a + 1; b < 3; b++){
+      const x = c[a], y = c[b];
+      if (x.t < 9 && y.t < 9 && x.t === y.t && x.l === y.l && x.s !== y.s){
+        const kk = [Math.max(x.lv, y.lv), Math.min(x.lv, y.lv), c.find((_, i) => i !== a && i !== b).lv];
+        if (!pk || kk.join() > pk.join()){ pk = kk; pt = x.t; }
+      }
+      if (x.lv === y.lv && x.lv > 0){
+        const kk = [x.lv, x.lv, c.find((_, i) => i !== a && i !== b).lv];
+        if (!nk || kk[0] > nk[0]) nk = kk;
+      }
     }
+    if (pk){ k = 2; type = pt; key = pk; }
+    else if (nk){ k = 1; key = nk; }
   }
   return {k, type, lvs:key, score:k*1e6 + key[0]*1e4 + key[1]*100 + key[2], cards:c};
 }
@@ -701,7 +732,7 @@ function decide(results){
   if (!results.length) return {win:[], typed:false};
   const top = Math.max(...results.map(x => x.r.k));
   let S = results.filter(x => x.r.k === top), typed = false;
-  if (S.length > 1 && (top === 4 || top === 2)){
+  if (S.length > 1 && TYPED.includes(top)){
     const unbeaten = S.filter(x => !S.some(y => y !== x && BEATS[y.r.type] === x.r.type));
     if (unbeaten.length && unbeaten.length < S.length){ S = unbeaten; typed = true; }
   }
@@ -709,6 +740,25 @@ function decide(results){
   return {win:S.filter(x => x.r.score === m).map(x => x.p), typed};
 }
 
+/* ================= yaku table (shared) ================= */
+const YAKU_ROWS = [
+  ['進化ライン', '同じ系統のたね・1進化・2進化', [[0,0,1],[0,0,2],[0,0,3]], '約6%'],
+  ['御三家そろい', '同じ数字のちがうタイプ3匹', [[0,0,3],[1,0,3],[2,0,3]], '約8%'],
+  ['進化の階段', '同じタイプで、たね・1進化・2進化（系統はバラバラでOK）', [[0,0,1],[0,1,2],[0,2,3]], '約12%'],
+  ['同じタイプ3枚', '同じタイプが3匹', [[1,1,1],[1,2,1],[1,0,3]], '約20%'],
+  ['進化ペア', '同じ系統の2匹（ヒトカゲとリザードなど）', [[2,0,1],[2,0,2]], '約19%'],
+  ['同じ数字2枚', '', [[0,0,3],[1,0,3]], '約23%'],
+  ['なし', 'そろわない', [], '約12%']];
+function yakuRowsHTML(cls){
+  return YAKU_ROWS.map((r, k) => {
+    const stars = 6 - k;
+    return `<div class="${cls} ${cls === 'yrow' ? 'rise' : ''} ${k < 4 ? 'big3' : ''}" style="--d:${k}">
+      <div class="cards">${r[2].map(c => cardHTML(mkCard(...c), 'sm')).join('') || '<span class="pill ghost">－</span>'}</div>
+      <span class="nm"><em class="stars">${stars ? '★'.repeat(stars) : '☆'}</em>${r[0]}${r[1] ? `<small>${r[1]}</small>` : ''}</span>
+      <span class="freq">${r[3]}</span></div>`;
+  }).join('');
+}
+document.getElementById('tYaku').innerHTML = yakuRowsHTML('yrow');
 /* ================= tutorial ================= */
 document.querySelectorAll('i.cd').forEach(i => {
   const d = i.dataset.c;
@@ -821,7 +871,7 @@ function buildSeats(vi){
   $('#opps').innerHTML = order.map(i => `
     <div class="seat" data-i="${i}" style="--c:${SEATC[i]}">
       <span class="bubble"></span>
-      <span class="nm"><i></i><em></em></span><span class="ch"></span>
+      <span class="nm"><i></i><em></em></span><span class="ch"></span><span class="betline"><span class="bt"></span><span class="ac"></span></span>
       <div class="cards"></div><span class="hand"></span>
     </div>`).join('');
   document.querySelectorAll('#opps .seat').forEach(el => el.addEventListener('click', () => {
@@ -846,13 +896,16 @@ function renderView(v){
     el.classList.toggle('lead', p.lead);
     el.classList.toggle('pickable', UI.pickSeats.includes(i));
     el.querySelector('.nm em').textContent = p.name + (p.kind === 'cpu' ? '' : '');
-    el.querySelector('.ch').textContent = p.inGame ? `チップ ${p.chips}` : 'チップ切れ';
+    el.querySelector('.ch').textContent = p.inGame ? `手持ち ${p.chips}` : 'チップ切れ';
+    el.querySelector('.bt').textContent = p.inGame ? `賭け ${p.bet}` : '';
+    const ac = el.querySelector('.ac'); ac.textContent = p.act; ac.className = 'ac ' + actCls(p.act);
     el.querySelector('.cards').innerHTML = p.hand.map(c => cardOf(c, 'sm', '', fresh)).join('');
     el.querySelector('.hand').textContent = p.label || '';
   });
   $('#gBoard').innerHTML = v.board.map(c => cardOf(c, 'md', UI.pickBoard ? 'pick' : '', fresh)).join('');
   $('#gDeck').innerHTML = cardHTML('back', 'md');
   $('#gPot').textContent = v.pot;
+  $('#gHigh').textContent = v.high ? `今の賭け金 ${v.high}枚` : '';
   const m = v.players[vi];
   $('#meArea').classList.toggle('turn', v.turn === vi);
   $('#meArea').classList.toggle('out', m.out);
@@ -860,11 +913,14 @@ function renderView(v){
   $('.mename').textContent = m.name;
   $('#meHand').innerHTML = m.hand.map(c => cardOf(c, 'md', UI.pickHand ? 'pick' : '', fresh)).join('');
   $('#meChips').textContent = m.chips;
+  $('#meBet').textContent = `賭け ${m.bet}枚` + (m.toCall && !m.out && v.high ? `（あと${m.toCall}枚でコール）` : '');
+  $('#meAct').textContent = m.act; $('#meAct').className = 'ac ' + actCls(m.act);
   $('#meHandName').textContent = m.myLabel || '';
   if (UI.pickHand) $('#meHand').querySelectorAll('.pc').forEach((el, j) => el.addEventListener('click', () => UI.done && UI.done({hand:j})));
   if (UI.pickBoard) $('#gBoard').querySelectorAll('.pc').forEach((el, j) => el.addEventListener('click', () => UI.done && UI.done({board:j})));
   if (!UI.asking) showNowSilent(v.now);
 }
+function actCls(a){ return !a ? '' : a.startsWith('降') ? 'fold' : a.startsWith('レイズ') || a.startsWith('ベット') ? 'up' : a.startsWith('コール') ? 'call' : 'chk'; }
 function showNowSilent(raw){ if (raw === UI.nowRaw) return; showNow(raw); }
 function mkBtn(html, cls, fn){
   const e = document.createElement('button'); e.className = 'gbtn ' + (cls || ''); e.innerHTML = html;
@@ -909,7 +965,7 @@ function makeView(vi){
   const opened = active().filter(p => p.open);
   const lead = opened.length >= 2 ? judge(st).win : [];
   return {
-    round:G.round, rounds:ROUNDS, phase:G.phase, pot:G.pot, turn:G.turn, now:G.nowRaw,
+    high:G.high || 0, round:G.round, rounds:ROUNDS, phase:G.phase, pot:G.pot, turn:G.turn, now:G.nowRaw,
     board:G.board.map(c => G.boardOpen ? ser(c) : null),
     fresh:[...G.fresh].map(c => c.uid),
     players:G.players.map((p, i) => {
@@ -920,7 +976,7 @@ function makeView(vi){
         myLabel = 'いまの役：' + rlabel(evalP(p, st));
         if (p.hand.some(c => c.m && !c.used) && !G.para.has(p.hand.find(c => c.m))) myLabel += '　※メタモンは技タイムでへんしん';
       }
-      return {name:p.name, kind:p.kind, chips:p.chips, inGame:p.inGame, out:p.out, open:p.open, lead:lead.includes(p), label, myLabel,
+      return {bet:p.bet || 0, act:p.act || '', toCall:Math.max(0, (G.high || 0) - (p.inRound || 0)), name:p.name, kind:p.kind, chips:p.chips, inGame:p.inGame, out:p.out, open:p.open, lead:lead.includes(p), label, myLabel,
         hand:(p.hand || []).map(c => (i === vi || p.open) ? ser(c) : null)};
     })
   };
@@ -957,7 +1013,7 @@ function dropRemote(p){
   for (const [q, x] of G.pending) if (x.p === p){ G.pending.delete(q); x.res(fallback(x.spec)); }
   render();
 }
-function pay(p, n){ const a = Math.min(n, p.chips); p.chips -= a; p.inRound += a; G.pot += a; return a; }
+function pay(p, n){ const a = Math.min(n, p.chips); p.chips -= a; p.inRound += a; p.bet = (p.bet || 0) + a; G.pot += a; return a; }
 
 /* ---------- CPU logic ---------- */
 function strength(p){
@@ -969,7 +1025,7 @@ function strength(p){
     return s + (Math.random() - .5) * .15;
   }
   const ev = evalHand(p.hand, G.board);
-  let s = [.18, .42, .62, .82, .93][ev.k] + ev.lvs[0] / 90;
+  let s = [.15, .3, .45, .6, .75, .87, .95][ev.k] + ev.lvs[0] / 90;
   if (p.hand.some(c => c.move)) s += .1;
   return s + (Math.random() - .5) * .12;
 }
@@ -1014,8 +1070,8 @@ function cpuChoose(p){
 /* ---------- betting ---------- */
 async function betRound(unit){
   const pl = G.players;
-  pl.forEach(p => p.inRound = 0);
-  let high = 0, raised = false;
+  pl.forEach(p => { p.inRound = 0; if (!p.out) p.act = ''; });
+  let high = 0, raised = false; G.high = 0; G.lastAct = '';
   let queue = seatOrder().filter(i => pl[i].inGame && !pl[i].out);
   while (queue.length){
     if (active().length <= 1) break;
@@ -1023,7 +1079,7 @@ async function betRound(unit){
     if (p.out || p.chips === 0) continue;
     const toCall = high - p.inRound;
     G.turn = i; render();
-    now(`${W(p)}の番…`);
+    now((G.lastAct ? G.lastAct + '<br>' : '') + `${W(p)}の番…`);
     let act;
     if (p.kind === 'cpu'){
       await gsleep(650 + rnd(500));
@@ -1038,15 +1094,22 @@ async function betRound(unit){
         : [{t:`コール（${toCall}枚）`, v:'call'}, ...(raised ? [] : [{t:`レイズ（${toCall + unit}枚）`, v:'raise'}]), {t:'降りる', v:'fold', cls:'alt'}];
       act = await askPlayer(p, {prompt:toCall === 0 ? '<b>あなたの番</b>　賭ける？' : `<b>あなたの番</b>　${toCall}枚で勝負を続ける？`, btns});
     }
-    bubble(i, {check:'チェック', bet:'ベット', call:'コール', raise:'レイズ', fold:'降りる'}[act]);
+    let paid = 0;
     if (act === 'fold') p.out = true;
-    if (act === 'call') pay(p, toCall);
+    if (act === 'call') paid = pay(p, toCall);
     if (act === 'bet' || act === 'raise'){
       if (act === 'raise') raised = true;
-      high += unit; pay(p, high - p.inRound);
+      high += unit; G.high = high; paid = pay(p, high - p.inRound);
       const ord = seatOrder(); const pos = ord.indexOf(i);
       queue = [...ord.slice(pos + 1), ...ord.slice(0, pos)].filter(j => pl[j].inGame && !pl[j].out && pl[j].chips > 0);
     }
+    const lab = {check:'チェック', bet:'ベット', call:'コール', raise:'レイズ', fold:'降りた'}[act];
+    p.act = act === 'fold' || act === 'check' ? lab : `${lab} +${paid}`;
+    bubble(i, p.act, 1800);
+    G.lastAct = act === 'fold' ? `${W(p)}は<b>降りた</b>`
+      : act === 'check' ? `${W(p)}は<b>チェック</b>（賭けずに回す）`
+      : `${W(p)}が<b>${lab}</b>：${paid}枚出した（このラウンド合計${p.bet}枚）`;
+    now(G.lastAct);
     render();
   }
   G.turn = -1; render();
@@ -1111,7 +1174,8 @@ async function playRound(){
   const deck = ALL.map(c => ({...c})).concat([newMeta()]).map((c, k) => ({...c, uid:k}));
   for (let i = deck.length - 1; i > 0; i--){ const j = rnd(i + 1); [deck[i], deck[j]] = [deck[j], deck[i]]; }
   G.deck = deck; G.pot = 0; G.boardOpen = false; G.turn = -1; G.para = new Set();
-  pl.forEach(p => { p.start = p.chips; p.out = !p.inGame; p.open = false; p.hand = []; });
+  pl.forEach(p => { p.start = p.chips; p.out = !p.inGame; p.open = false; p.hand = []; p.bet = 0; p.act = ''; });
+  G.high = 0; G.lastAct = '';
   pl.filter(p => p.inGame).forEach(p => { p.hand = [G.deck.pop(), G.deck.pop()]; pay(p, 1); });
   G.board = [G.deck.pop(), G.deck.pop(), G.deck.pop()];
   setPhase(0); render();
@@ -1406,13 +1470,8 @@ $('#toRules').addEventListener('click', () => { if (confirm('ゲームを抜け�
 
 /* ================= yaku list / dex / zoom ================= */
 (function(){
-  const rows = [
-    ['進化ライン', '同じラインのたね・1進化・2進化', [[0,0,1],[0,0,2],[0,0,3]]],
-    ['同じ数字3枚', '例：御三家の最終進化', [[0,0,3],[1,0,3],[2,0,3]]],
-    ['同じタイプ3枚', '同じタイプが3匹', [[1,1,1],[1,2,2],[1,0,3]]],
-    ['同じ数字2枚', '', [[0,0,3],[1,0,3]]],
-    ['なし', 'そろわない', []]];
-  $('#gYakuList').innerHTML = rows.map((r, k) => `<div class="yrow2"><span class="rk">${k + 1}</span><div class="cards">${r[2].map(c => cardHTML(mkCard(...c), 'sm')).join('')}</div><span class="nm">${r[0]}${r[1] ? `<small>${r[1]}</small>` : ''}</span></div>`).join('');
+  const rows = YAKU_ROWS;
+  $('#gYakuList').innerHTML = yakuRowsHTML('yrow2');
   const dex = [0, 1, 2, 3].map(t => `<h4 style="--tc:var(--${['fire','water','grass','elec'][t]})">${TYPES[t]}</h4><div class="dexgrid">${[0, 1, 2].map(l => [1, 2, 3].map(s => cardHTML(mkCard(t, l, s), 'md')).join('')).join('')}</div>`).join('')
     + `<h4 style="--tc:var(--meta)">とくべつ</h4><div class="dexgrid">${cardHTML(newMeta(), 'md')}</div>`;
   $('#dexBody').innerHTML = dex;
